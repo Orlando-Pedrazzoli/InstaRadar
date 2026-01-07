@@ -5,26 +5,68 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
-import { Eye, EyeOff, Mail, Lock, User, Github, Chrome } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Github, Chrome, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register } = useAuth();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
+  const { register, loginWithGoogle, loginWithGithub } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (!agreeTerms) {
+      toast.error("Please agree to the Terms of Service");
+      return;
+    }
+
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      await register(name, email);
-    } catch (error) {
-      console.error(error);
+      await register(name, email, password);
+      toast.success("Account created successfully!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create account. Please try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign up with Google.");
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGithubLogin = async () => {
+    setIsGithubLoading(true);
+    try {
+      await loginWithGithub();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign up with GitHub.");
+      setIsGithubLoading(false);
     }
   };
 
@@ -40,7 +82,7 @@ export default function RegisterPage() {
             </div>
           </Link>
           <h1 className="text-3xl font-bold text-white mb-2">Create your account</h1>
-          <p className="text-zinc-500">Join 50,000+ users tracking Instagram insights</p>
+          <p className="text-zinc-500">Start tracking Instagram activity for free</p>
         </div>
 
         <div className="glass-card p-8 rounded-3xl">
@@ -50,11 +92,13 @@ export default function RegisterPage() {
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
                 <Input
+                  type="text"
                   required
                   placeholder="John Doe"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-primary/50"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -70,6 +114,7 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-primary/50"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -85,6 +130,7 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-12 pr-12 h-12 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-primary/50"
+                  disabled={isSubmitting}
                 />
                 <button
                   type="button"
@@ -94,21 +140,53 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
+              <p className="text-xs text-zinc-600 pl-1">At least 8 characters</p>
             </div>
 
-            <div className="flex items-start space-x-2 pt-2">
-              <Checkbox id="terms" className="mt-1 border-zinc-500 data-[state=checked]:bg-primary data-[state=checked]:border-primary" required />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-400 pl-1">Confirm Password</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-primary/50"
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-2">
+              <Checkbox 
+                id="terms" 
+                checked={agreeTerms}
+                onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
+                className="border-zinc-500 data-[state=checked]:bg-primary data-[state=checked]:border-primary mt-0.5" 
+              />
               <label htmlFor="terms" className="text-sm text-zinc-400 cursor-pointer select-none leading-tight">
-                I agree to the <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                I agree to the{" "}
+                <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>
+                {" "}and{" "}
+                <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
               </label>
             </div>
 
             <Button 
               type="submit" 
-              disabled={isSubmitting}
-              className="w-full h-12 bg-gradient-primary hover:opacity-90 rounded-xl text-white font-bold mt-2"
+              disabled={isSubmitting || !agreeTerms}
+              className="w-full h-12 bg-gradient-primary hover:opacity-90 rounded-xl text-white font-bold"
             >
-              {isSubmitting ? "Creating account..." : "Create Account"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </Button>
           </form>
 
@@ -117,17 +195,35 @@ export default function RegisterPage() {
               <div className="w-full border-t border-white/5"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#08080c] px-4 text-zinc-500 font-medium">Or sign up with</span>
+              <span className="bg-[#12121a] px-4 text-zinc-500 font-medium">Or continue with</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2">
-              <Chrome className="h-5 w-5" />
+            <Button 
+              variant="outline" 
+              className="border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2"
+              onClick={handleGoogleLogin}
+              disabled={isGoogleLoading}
+            >
+              {isGoogleLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Chrome className="h-5 w-5" />
+              )}
               Google
             </Button>
-            <Button variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2">
-              <Github className="h-5 w-5" />
+            <Button 
+              variant="outline" 
+              className="border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2"
+              onClick={handleGithubLogin}
+              disabled={isGithubLoading}
+            >
+              {isGithubLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Github className="h-5 w-5" />
+              )}
               GitHub
             </Button>
           </div>

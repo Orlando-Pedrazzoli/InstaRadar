@@ -4,20 +4,28 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { Mail, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const { forgotPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulation
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+    try {
+      await forgotPassword(email);
+      setIsSuccess(true);
+      toast.success("Reset link sent! Check your email.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send reset link. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -31,16 +39,33 @@ export default function ForgotPasswordPage() {
               <span className="text-white font-bold text-2xl">R</span>
             </div>
           </Link>
-          <h1 className="text-3xl font-bold text-white mb-2">Reset Password</h1>
-          <p className="text-zinc-500">
-            {isSubmitted 
-              ? "Check your email for instructions" 
-              : "Enter your email and we'll send you a reset link"}
-          </p>
+          <h1 className="text-3xl font-bold text-white mb-2">Reset your password</h1>
+          <p className="text-zinc-500">Enter your email and we&apos;ll send you a reset link</p>
         </div>
 
         <div className="glass-card p-8 rounded-3xl">
-          {!isSubmitted ? (
+          {isSuccess ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">Check your email</h2>
+              <p className="text-zinc-400 mb-6">
+                We&apos;ve sent a password reset link to<br />
+                <span className="text-white font-medium">{email}</span>
+              </p>
+              <p className="text-xs text-zinc-500 mb-6">
+                Didn&apos;t receive the email? Check your spam folder or try again.
+              </p>
+              <Button 
+                variant="outline"
+                onClick={() => setIsSuccess(false)}
+                className="border-white/10 hover:bg-white/5 rounded-xl"
+              >
+                Try another email
+              </Button>
+            </div>
+          ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-zinc-400 pl-1">Email Address</label>
@@ -53,6 +78,7 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-primary/50"
+                    disabled={isSubmitting}
                   />
                 </div>
               </div>
@@ -62,34 +88,26 @@ export default function ForgotPasswordPage() {
                 disabled={isSubmitting}
                 className="w-full h-12 bg-gradient-primary hover:opacity-90 rounded-xl text-white font-bold"
               >
-                {isSubmitting ? "Sending link..." : "Send Reset Link"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Reset Link"
+                )}
               </Button>
             </form>
-          ) : (
-            <div className="text-center py-4">
-              <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-6">
-                <CheckCircle2 className="h-8 w-8 text-green-500" />
-              </div>
-              <p className="text-zinc-300 mb-8">
-                If an account exists for <span className="text-white font-bold">{email}</span>, you will receive a password reset link shortly.
-              </p>
-              <Button 
-                variant="outline" 
-                className="w-full h-12 border-white/10 hover:bg-white/5 rounded-xl"
-                onClick={() => setIsSubmitted(false)}
-              >
-                Try another email
-              </Button>
-            </div>
           )}
-
-          <div className="mt-8 pt-8 border-t border-white/5 text-center">
-            <Link href="/login" className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-white transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-              Back to login
-            </Link>
-          </div>
         </div>
+
+        <Link 
+          href="/login" 
+          className="flex items-center justify-center gap-2 mt-8 text-zinc-500 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to login
+        </Link>
       </div>
     </main>
   );

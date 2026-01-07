@@ -5,25 +5,49 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
-import { Eye, EyeOff, Mail, Lock, Github, Chrome } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Github, Chrome, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useAuth();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
+  const { login, loginWithGoogle, loginWithGithub } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await login(email);
-    } catch (error) {
-      console.error(error);
+      await login(email, password);
+      toast.success("Login successful!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to login. Please try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to login with Google.");
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGithubLogin = async () => {
+    setIsGithubLoading(true);
+    try {
+      await loginWithGithub();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to login with GitHub.");
+      setIsGithubLoading(false);
     }
   };
 
@@ -55,6 +79,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-primary/50"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -75,6 +100,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-12 pr-12 h-12 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:border-primary/50"
+                  disabled={isSubmitting}
                 />
                 <button
                   type="button"
@@ -98,7 +124,14 @@ export default function LoginPage() {
               disabled={isSubmitting}
               className="w-full h-12 bg-gradient-primary hover:opacity-90 rounded-xl text-white font-bold"
             >
-              {isSubmitting ? "Signing in..." : "Sign In"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
 
@@ -107,24 +140,42 @@ export default function LoginPage() {
               <div className="w-full border-t border-white/5"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#08080c] px-4 text-zinc-500 font-medium">Or continue with</span>
+              <span className="bg-[#12121a] px-4 text-zinc-500 font-medium">Or continue with</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2">
-              <Chrome className="h-5 w-5" />
+            <Button 
+              variant="outline" 
+              className="border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2"
+              onClick={handleGoogleLogin}
+              disabled={isGoogleLoading}
+            >
+              {isGoogleLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Chrome className="h-5 w-5" />
+              )}
               Google
             </Button>
-            <Button variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2">
-              <Github className="h-5 w-5" />
+            <Button 
+              variant="outline" 
+              className="border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2"
+              onClick={handleGithubLogin}
+              disabled={isGithubLoading}
+            >
+              {isGithubLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Github className="h-5 w-5" />
+              )}
               GitHub
             </Button>
           </div>
         </div>
 
         <p className="text-center mt-8 text-zinc-500">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/register" className="text-primary font-semibold hover:underline">
             Sign up
           </Link>
