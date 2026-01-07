@@ -19,7 +19,6 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
-  loginWithGithub: () => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -56,13 +55,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
-    });
-  };
-
-  const loginWithGithub = async () => {
-    await authClient.signIn.social({
-      provider: "github",
       callbackURL: "/dashboard",
     });
   };
@@ -105,7 +97,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: isPending, 
         login, 
         loginWithGoogle,
-        loginWithGithub,
         register, 
         logout,
         forgotPassword,

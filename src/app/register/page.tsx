@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
-import { Eye, EyeOff, Mail, Lock, User, Github, Chrome, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Chrome, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
@@ -18,8 +18,7 @@ export default function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isGithubLoading, setIsGithubLoading] = useState(false);
-  const { register, loginWithGoogle, loginWithGithub } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,16 +56,6 @@ export default function RegisterPage() {
     } catch (error: any) {
       toast.error(error.message || "Failed to sign up with Google.");
       setIsGoogleLoading(false);
-    }
-  };
-
-  const handleGithubLogin = async () => {
-    setIsGithubLoading(true);
-    try {
-      await loginWithGithub();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to sign up with GitHub.");
-      setIsGithubLoading(false);
     }
   };
 
@@ -199,34 +188,19 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Button 
-              variant="outline" 
-              className="border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2"
-              onClick={handleGoogleLogin}
-              disabled={isGoogleLoading}
-            >
-              {isGoogleLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Chrome className="h-5 w-5" />
-              )}
-              Google
-            </Button>
-            <Button 
-              variant="outline" 
-              className="border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2"
-              onClick={handleGithubLogin}
-              disabled={isGithubLoading}
-            >
-              {isGithubLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Github className="h-5 w-5" />
-              )}
-              GitHub
-            </Button>
-          </div>
+          <Button 
+            variant="outline" 
+            className="w-full border-white/10 hover:bg-white/5 rounded-xl h-12 gap-2"
+            onClick={handleGoogleLogin}
+            disabled={isGoogleLoading}
+          >
+            {isGoogleLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Chrome className="h-5 w-5" />
+            )}
+            Continue with Google
+          </Button>
         </div>
 
         <p className="text-center mt-8 text-zinc-500">
